@@ -1,0 +1,20 @@
+# simulator build and reports (sab kuch scripts/out mein aata hai)
+scripts/out/
+scripts/csrc/
+scripts/simv*
+scripts/*.log
+scripts/urgReport/
+scripts/ucli.key
+scripts/vc_hdrs.h
+*.vcd
+*.vpd
+*.fsdb
+DVEfiles/
+novas*
+*.vdb/
+
+# logs: sirf .gitkeep commit hoga, selected logs manually add karenge (git add -f)
+logs/*
+!logs/.gitkeep
+
+*.swp
