@@ -45,7 +45,7 @@ Compile details and the file list: [docs/milestone1_compile.md](docs/milestone1_
 |-----------|--------|
 | 0 - Repository and GitHub setup | Done |
 | 1 - Compile the DUT | Done (clean compile/elaboration, DUT-only smoke top passes reset) |
-| 2 - RTL linting | Not started |
+| 2 - RTL linting | Done, 36 messages classified (docs/lint_summary.md) |
 | 3 - DUT analysis and verification plan | Not started |
 | 4+ - UVM environment, scoreboard, assertions, coverage, tests | Not started |
 

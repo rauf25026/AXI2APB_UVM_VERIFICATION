@@ -11,3 +11,11 @@
 - **Coverage/lint status:** Coverage collection enabled in the compile flow; lint not run yet.
 - **Issues encountered:** None in the DUT compile.
 - **Next step:** Milestone 2 - RTL lint on the same file list.
+
+## 2026-10-11 (update - Milestone 2)
+- **Work completed:** RTL lint with VCS `+lint=all` on the compile file list; 36 messages reviewed and classified (docs/lint_summary.md).
+- **Tests executed:** Lint run (scripts/lint.sh).
+- **Pass/fail result:** No errors. 36 messages, all dispositioned.
+- **Coverage/lint status:** Lint done. Key finding: PSLVERR is unused by the DUT (as in the spec).
+- **Issues encountered:** `-lint=all` is not accepted by this VCS version; `+lint=all` is the correct option.
+- **Next step:** Milestone 3 - DUT analysis and verification plan.
