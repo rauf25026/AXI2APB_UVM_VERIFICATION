@@ -68,3 +68,51 @@ Key observations:
 | VP-WR-04 | Address boundaries: 0x0, 0x4, 0xFFFFFFFC, and addresses with upper bits set (only the lower APB_ADDR_WIDTH bits are used) | wr_no_wait_test (directed addresses), constrained-random tests | SB-WR | CG_ADDR: low / mid / high / boundary bins |
 | VP-WR-05 | Data patterns: zero, all-ones, alternating (0xAAAAAAAA, 0x55555555), walking-one, random | wr_no_wait_test (directed data), random tests | SB-WR | CG_DATA |
 | VP-WR-06 | With PREADY high from the first request cycle, the APB transfer lasts exactly one cycle (PENABLE high for one cycle) | wr_no_wait_test | A_APB_NO_WAIT: PENABLE is high for one cycle when PREADY was already high. SB-WR | CG_WAIT: zero-wait write |
+
+## Buffering note (from axi_single_slice.sv)
+Every AXI channel passes through a FIFO (depth BUFF_DEPTH_SLAVE = 4, no fall-through): ready = FIFO not full, valid = FIFO not empty. Consequences used in the rows below:
+- A handshake at the pins happens before the FSM sees the request (at least one cycle later).
+- AWREADY, WREADY and ARREADY go low only when the matching FIFO is full.
+- BREADY or RREADY low reaches the FSM only when the B or R FIFO is full. Until then the FIFO absorbs the responses. TBC (exact count to be observed).
+
+## 5. APB PREADY wait states for writes
+| ID | Feature / RTL behaviour | Stimulus (test) | Checker | Coverage |
+|----|-------------------------|-----------------|---------|----------|
+| VP-WW-01 | PREADY low in the first request cycle: FSM goes to WAIT_W_PREADY and holds PENABLE=1, PWRITE=1, PADDR and PWDATA until PREADY=1 | wr_wait_test: PREADY delay of 1, 2, 3, 5 and 10 cycles | A_APB_STABLE, SB-WR | CG_WAIT: write with 0 / 1 / 2-4 / 5+ wait cycles |
+| VP-WW-02 | Wait cycles delay completion but do not change address or data | wr_wait_test with random address and data | SB-WR: compare address and data at the PREADY cycle, not only at the first cycle | CG_WAIT |
+| VP-WW-03 | The B response is produced only after the APB write completes (PREADY=1) | wr_wait_test | A_BRESP_AFTER_APB: BVALID only after a write completion. SB-RESP | CG_WAIT |
+| VP-WW-04 | Long wait (for example 50 cycles): the DUT has no timeout and keeps waiting | wr_wait_test (long case) | A_APB_STABLE. Testbench watchdog separates a slow slave from a DUT hang | CG_WAIT: 5+ bin |
+
+## 6. AXI B-channel response and BREADY backpressure
+| ID | Feature / RTL behaviour | Stimulus (test) | Checker | Coverage |
+|----|-------------------------|-----------------|---------|----------|
+| VP-B-01 | BVALID after the APB write completes. BRESP is always OKAY in this RTL | wr_no_wait_test, wr_wait_test | SB-RESP: BRESP == OKAY | CG_RESP: BRESP values seen |
+| VP-B-02 | BID = AWID and BUSER = AWUSER of the same write | id_user_test | SB-RESP | CG_ID_USER |
+| VP-B-03 | BVALID and the B payload stay stable until BREADY (AXI rule) | wr_bready_delay_test | A_B_STABLE | CG_BREADY: delay 0 / 1-3 / 4+ cycles |
+| VP-B-04 | BREADY low: the B FIFO absorbs responses and the FSM stalls in SEND_B_RESP only when the FIFO is full. TBC | wr_bready_delay_test: back-to-back writes with BREADY held low for many cycles | SB-RESP: responses return in order, none lost, none duplicated. A_B_STABLE | CG_B_BUFFER_FULL: write issued while the B FIFO is full |
+| VP-B-05 | Back-to-back writes return B responses in write order with the correct IDs | b2b_wr_test | SB-RESP (queue compare) | CG_B2B: back-to-back writes |
+
+## 7. AXI read-address (AR) handshake
+| ID | Feature / RTL behaviour | Stimulus (test) | Checker | Coverage |
+|----|-------------------------|-----------------|---------|----------|
+| VP-AR-01 | AR is accepted into the AR FIFO. ARREADY goes low only when the FIFO is full. TBC | rd_no_wait_test, b2b_rd_test (also many ARs while RREADY is held low) | SB-RD, A_AR_STABLE | CG_AR_BUFFER: ARREADY low seen |
+| VP-AR-02 | ARADDR[APB_ADDR_WIDTH-1:0] becomes PADDR | rd_no_wait_test | SB-RD | CG_ADDR |
+| VP-AR-03 | ARID and ARUSER come back as RID and RUSER | id_user_test | SB-RD | CG_ID_USER |
+| VP-AR-04 | ARLEN, ARSIZE, ARBURST, ARLOCK, ARCACHE, ARPROT, ARREGION and ARQOS are not used by the FSM. Document the observed effect | rd_no_wait_test with different values of these fields (single beat) | SB-RD: transfer is unchanged | CG_AR_CTRL |
+| VP-AR-05 | AXI rule on the testbench side: ARVALID and the AR payload stay stable until ARREADY | all tests | A_AR_STABLE | none |
+
+## 8. Read conversion to APB
+| ID | Feature / RTL behaviour | Stimulus (test) | Checker | Coverage |
+|----|-------------------------|-----------------|---------|----------|
+| VP-RD-01 | For each accepted AR the APB shows PSEL=1, PWRITE=0, PENABLE=1, PADDR=ARADDR and holds them until PREADY=1 | rd_no_wait_test, rd_wait_test | SB-RD (address and direction compare). A_APB_STABLE | CG_TXN_TYPE: read seen |
+| VP-RD-02 | Exactly one APB read per AXI single-beat read. PWDATA is not checked on reads | rd_no_wait_test, b2b_rd_test | SB-RD: read counts match | CG_TXN_TYPE |
+| VP-RD-03 | With PREADY high in the first cycle the APB read lasts one cycle and PRDATA is sampled in that cycle | rd_no_wait_test | A_APB_NO_WAIT, SB-RD | CG_WAIT: zero-wait read |
+| VP-RD-04 | Address boundaries and read-data patterns (zero, all-ones, alternating, walking, random) | rd_no_wait_test, random tests | SB-RD | CG_ADDR, CG_DATA |
+
+## 9. APB PREADY wait states for reads
+| ID | Feature / RTL behaviour | Stimulus (test) | Checker | Coverage |
+|----|-------------------------|-----------------|---------|----------|
+| VP-RW-01 | PREADY low: FSM goes to WAIT_R_PREADY and holds the read control and address until PREADY=1 | rd_wait_test: PREADY delay of 1, 2, 3, 5 and 10 cycles | A_APB_STABLE, SB-RD | CG_WAIT: read with 0 / 1 / 2-4 / 5+ wait cycles |
+| VP-RW-02 | PRDATA is captured only in the cycle where PREADY=1 (sample_RDATA = PREADY). PRDATA values while PREADY is low must be ignored | rd_wait_test: the APB slave drives different junk values on PRDATA while PREADY is low | SB-RD: RDATA == PRDATA of the PREADY cycle | CG_WAIT |
+| VP-RW-03 | RDATA is held in RDATA_Q, so later changes on PRDATA do not change a pending response | rd_wait_test: change PRDATA after the transfer completes | A_R_STABLE: RDATA stable while RVALID is high and RREADY is low. SB-RD | none |
+| VP-RW-04 | Long wait (for example 50 cycles): the bridge waits, no timeout | rd_wait_test (long case) | Testbench watchdog | CG_WAIT: 5+ bin |
