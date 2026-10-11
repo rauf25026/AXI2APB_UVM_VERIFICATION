@@ -172,3 +172,108 @@ Every AXI channel passes through a FIFO (depth BUFF_DEPTH_SLAVE = 4, no fall-thr
 | VP-UNS-01 | Write burst (AWLEN > 0). The FSM pops one W entry per write, so predicted: the remaining W beats stay in the W FIFO and pair with the next AW. Predicted from the RTL, TBC | burst_observe_test (extra, directed, documented): AWLEN=1 with 2 W beats, then a normal write | No pass/fail against AXI. The observed APB activity and B count are recorded in the final report | CG_BURST_LEN: AWLEN / ARLEN values seen |
 | VP-UNS-02 | Read burst (ARLEN > 0). The FSM returns one R beat with RLAST=1, so an AXI master waiting for more beats would hang. TBC | burst_observe_test: ARLEN=1 | Observed behaviour recorded in the final report | CG_BURST_LEN |
 | VP-UNS-03 | Narrow transfers (AxSIZE smaller than the data width), FIXED and WRAP burst types, AxLOCK, AxCACHE, AxPROT, AxQOS and AxREGION are not used by the FSM | wr_no_wait_test, rd_no_wait_test with these fields varied (single beat) | SB-WR, SB-RD: transfer unchanged | CG_AW_CTRL, CG_AR_CTRL |
+
+## 18. Traceability summary
+
+### 18.1 Required plan sections (project specification, Milestone 3) -> this plan
+| Required section | Plan section |
+|------------------|--------------|
+| Reset behavior | 1 |
+| AXI write-address handshake | 2 |
+| AXI write-data handshake | 3 |
+| Write conversion to APB (PADDR, PWRITE, PENABLE, PSEL, PWDATA) | 4 |
+| APB PREADY low / wait states for writes | 5 |
+| AXI B-channel response and BREADY backpressure | 6 |
+| AXI read-address handshake | 7 |
+| Read conversion to APB | 8 |
+| APB PREADY low / wait states for reads | 9 |
+| PRDATA capture and AXI RDATA response | 10 |
+| RVALID / RREADY backpressure and RLAST | 11 |
+| AXI ID and USER propagation | 12 |
+| Simultaneous read/write priority | 13 |
+| Back-to-back transactions | 14 |
+| Different address / data / ID / USER values | 12, 15 |
+| Boundary addresses and parameter widths | 15 |
+| PSLVERR behaviour as implemented | 16 |
+| Unsupported features such as burst | 17 |
+
+Total plan items: 66. Items marked TBC (to be confirmed by simulation): 8 (VP-RST-03, VP-AW-02, VP-B-04, VP-AR-01, VP-RV-03, VP-PAR-02, VP-UNS-01, VP-UNS-02).
+
+### 18.2 Tests -> plan items
+Assertions run in every test, so rows that say "all tests" (VP-RST-04, VP-AW-05, VP-W-05, VP-WR-02, VP-AR-05, VP-RR-02, VP-RV-02, VP-VAL-01) are not repeated below.
+
+The first 13 tests are the minimum directed tests of Milestone 8. The tests marked "extra" are added from the RTL analysis.
+
+| Test | Plan items |
+|------|------------|
+| reset_smoke_test | VP-RST-01, VP-RST-02, VP-RST-04 |
+| wr_no_wait_test | VP-AW-03, VP-AW-04, VP-WR-01, VP-WR-03 to VP-WR-06, VP-B-01, VP-VAL-01, VP-VAL-02, VP-UNS-03 |
+| rd_no_wait_test | VP-AR-01, VP-AR-02, VP-AR-04, VP-RD-01 to VP-RD-04, VP-RR-01, VP-RR-03, VP-VAL-01, VP-VAL-02, VP-UNS-03 |
+| wr_wait_test | VP-WR-01, VP-WW-01 to VP-WW-04, VP-B-01 |
+| rd_wait_test | VP-RD-01, VP-RW-01 to VP-RW-04, VP-RR-01 |
+| rd_rready_delay_test | VP-RV-01, VP-RV-03 |
+| wr_bready_delay_test | VP-B-03, VP-B-04 |
+| rd_wr_priority_test | VP-PRI-01 to VP-PRI-03 |
+| b2b_rd_test | VP-AR-01, VP-RD-02, VP-RR-03, VP-ID-02, VP-B2B-01 |
+| b2b_wr_test | VP-WR-03, VP-B-05, VP-ID-02, VP-B2B-02 |
+| mixed_rw_test | VP-B2B-03 |
+| id_user_test | VP-AW-03, VP-B-02, VP-AR-03, VP-ID-01, VP-ID-02 |
+| pslverr_test | VP-ERR-01 to VP-ERR-03 |
+| reset_mid_txn_test (extra) | VP-RST-03 |
+| aw_w_order_test (extra) | VP-AW-01, VP-W-01, VP-W-02 |
+| aw_fifo_depth_test (extra) | VP-AW-02 |
+| wstrb_wlast_test (extra) | VP-W-03, VP-W-04 |
+| burst_observe_test (extra) | VP-UNS-01, VP-UNS-02 |
+| param_width_test (optional extra) | VP-PAR-01, VP-PAR-02 |
+| random_rw_test (Milestone 9) | VP-VAL-01, VP-WR-04, VP-WR-05, VP-RD-04 and all checkers |
+
+### 18.3 Assertions -> plan items
+| Assertion | Rule | Plan items |
+|-----------|------|------------|
+| A_RST_IDLE | After reset the bridge is idle: PENABLE=0, PWRITE=0, BVALID=0, RVALID=0 | VP-RST-01, VP-RST-02, VP-RST-03 |
+| A_PSEL_CONST | PSEL is always 1 (documents the non-standard APB behaviour) | VP-RST-02 |
+| A_STATE_KNOWN | CS and NS never X/Z after reset release | VP-RST-04 |
+| A_AW_STABLE | AWVALID and the AW payload stay stable until AWREADY | VP-AW-02, VP-AW-05 |
+| A_W_STABLE | WVALID and the W payload stay stable until WREADY | VP-W-05 |
+| A_AR_STABLE | ARVALID and the AR payload stay stable until ARREADY | VP-AR-01, VP-AR-05 |
+| A_WR_NEEDS_AW_W | An APB write starts only after both an AW and a W were accepted | VP-W-02 |
+| A_APB_IDLE_WITHOUT_REQ | No PENABLE while only one of AW/W is pending or when idle | VP-W-02, VP-WR-02 |
+| A_APB_STABLE | APB control, address and data stay stable while PREADY is low | VP-WR-01, VP-WW-01, VP-WW-04, VP-RD-01, VP-RW-01 |
+| A_APB_CTRL_LEGAL | No illegal APB control combination (for example PWRITE=1 without PENABLE) | VP-WR-02 |
+| A_APB_NO_WAIT | With PREADY high in the first cycle PENABLE lasts one cycle | VP-WR-06, VP-RD-03 |
+| A_BRESP_AFTER_APB | BVALID only after an APB write completion | VP-WW-03 |
+| A_B_STABLE | BVALID and the B payload stay stable until BREADY | VP-B-03, VP-B-04 |
+| A_R_STABLE | RVALID and the R payload stay stable until RREADY | VP-RW-03, VP-RV-01, VP-RV-03 |
+| A_R_LAST | Every R handshake has RLAST=1 | VP-RV-02 |
+| A_RESP_OKAY | BRESP and RRESP are always OKAY | VP-RR-02, VP-ERR-01, VP-ERR-02 |
+| A_RD_PRIORITY | ARVALID and AWVALID both high in IDLE: the read is chosen (white-box) | VP-PRI-01 |
+
+### 18.4 Scoreboard checks -> plan items
+| Check | What it compares | Plan items |
+|-------|------------------|------------|
+| SB-WR | AXI write -> predicted APB write: address, PWRITE=1, PWDATA, one APB write per AXI write | VP-AW-01 to VP-AW-04, VP-W-01, VP-W-03, VP-W-04, VP-WR-01, VP-WR-03 to VP-WR-05, VP-WW-01, VP-WW-02, VP-PRI-02, VP-B2B-02, VP-B2B-03, VP-VAL-01, VP-VAL-02, VP-PAR-01, VP-UNS-03 |
+| SB-RD | AXI read -> predicted APB read address; PRDATA of the PREADY cycle returned as RDATA; RID/RUSER; one R beat | VP-AR-01 to VP-AR-04, VP-RD-01 to VP-RD-04, VP-RR-01 to VP-RR-03, VP-RV-03, VP-RW-01 to VP-RW-03, VP-ID-01, VP-ID-02, VP-B2B-01, VP-B2B-03, VP-VAL-01, VP-VAL-02, VP-ERR-03, VP-UNS-03 |
+| SB-RESP | Write response: BRESP == OKAY, BID/BUSER, order, none lost or duplicated | VP-B-01, VP-B-02, VP-B-04, VP-B-05, VP-WW-03, VP-ID-01, VP-ID-02, VP-ERR-01 |
+| SB-ORDER | Order of APB read and APB write when both are pending (read priority) | VP-PRI-01, VP-PRI-03 |
+
+Read and write queues are kept separate, because AXI does not order reads against writes.
+
+### 18.5 Functional coverage -> plan items
+| Coverage | Content | Plan items |
+|----------|---------|------------|
+| CG_RESET, CG_RESET_STATE | Reset applied and released; reset in each FSM state | VP-RST-01 to VP-RST-03 |
+| CG_FSM | All FSM states and transitions (VCS fsm code coverage) | VP-RST-04 |
+| CG_TXN_TYPE | Read / write | VP-WR-01, VP-WR-03, VP-RD-01, VP-RD-02, VP-RR-03 |
+| CG_ADDR | Low / mid / high / boundary, aligned / unaligned | VP-AW-03, VP-AR-02, VP-WR-04, VP-RD-04, VP-VAL-01, VP-VAL-02, VP-PAR-01 |
+| CG_DATA | Zero, all-ones, alternating, walking, random | VP-W-03, VP-WR-05, VP-RD-04, VP-RR-01, VP-VAL-01 |
+| CG_ID_USER | ID and USER values, crossed with read / write | VP-AW-03, VP-B-02, VP-AR-03, VP-ID-01, VP-ID-02 |
+| CG_WAIT | PREADY wait cycles: 0 / 1 / 2-4 / 5+, for write and read | VP-WR-06, VP-WW-01 to VP-WW-04, VP-RD-03, VP-RW-01 to VP-RW-04 |
+| CG_BREADY, CG_RREADY | Backpressure delay 0 / 1-3 / 4+ | VP-B-03, VP-RV-01 |
+| CG_B_BUFFER_FULL, CG_R_BUFFER_FULL, CG_AW_BUFFER, CG_AR_BUFFER | FIFO full conditions | VP-B-04, VP-RV-03, VP-AW-02, VP-AR-01 |
+| CG_B2B | Back-to-back: read-read, write-write, read-write, write-read | VP-B-05, VP-B2B-01 to VP-B2B-03 |
+| CG_PRIORITY | Same-cycle and queued read/write, write behind 1 / 2-4 / 5+ reads | VP-PRI-01 to VP-PRI-03 |
+| CG_AW_W_ORDER | AW before W / W before AW / same cycle | VP-AW-01, VP-W-01, VP-W-02 |
+| CG_AW_CTRL, CG_AR_CTRL, CG_WSTRB, CG_WLAST, CG_BURST_LEN | Values of the fields the FSM does not use | VP-AW-04, VP-AR-04, VP-W-03, VP-W-04, VP-UNS-01 to VP-UNS-03 |
+| CG_RESP, CG_RLAST | BRESP / RRESP values, RLAST | VP-B-01, VP-RR-02, VP-RV-02 |
+| CG_PSLVERR | PSLVERR high / low, crossed with read / write and wait states | VP-ERR-01 to VP-ERR-03 |
+| CG_CROSS | Transaction type x wait bin x backpressure bin x response (cross required by the project specification) | VP-WW-01, VP-RW-01, VP-B-03, VP-RV-01, VP-ERR-01 |
