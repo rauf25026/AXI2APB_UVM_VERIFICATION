@@ -116,3 +116,59 @@ Every AXI channel passes through a FIFO (depth BUFF_DEPTH_SLAVE = 4, no fall-thr
 | VP-RW-02 | PRDATA is captured only in the cycle where PREADY=1 (sample_RDATA = PREADY). PRDATA values while PREADY is low must be ignored | rd_wait_test: the APB slave drives different junk values on PRDATA while PREADY is low | SB-RD: RDATA == PRDATA of the PREADY cycle | CG_WAIT |
 | VP-RW-03 | RDATA is held in RDATA_Q, so later changes on PRDATA do not change a pending response | rd_wait_test: change PRDATA after the transfer completes | A_R_STABLE: RDATA stable while RVALID is high and RREADY is low. SB-RD | none |
 | VP-RW-04 | Long wait (for example 50 cycles): the bridge waits, no timeout | rd_wait_test (long case) | Testbench watchdog | CG_WAIT: 5+ bin |
+
+## 10. PRDATA capture and AXI RDATA response
+| ID | Feature / RTL behaviour | Stimulus (test) | Checker | Coverage |
+|----|-------------------------|-----------------|---------|----------|
+| VP-RR-01 | The PRDATA sampled in the PREADY cycle (RDATA_Q) is returned as RDATA with RVALID=1 | rd_no_wait_test, rd_wait_test | SB-RD: RDATA == PRDATA of the matching APB read | CG_DATA: zero, all-ones, alternating, walking, random |
+| VP-RR-02 | RRESP is always OKAY in this RTL | all read tests | SB-RD, A_RESP_OKAY: RRESP and BRESP are always OKAY (flags it if the behaviour ever changes) | CG_RESP |
+| VP-RR-03 | One AXI read returns exactly one R beat | rd_no_wait_test, b2b_rd_test | SB-RD: number of R beats == 1 per AR | CG_TXN_TYPE |
+
+## 11. RVALID / RREADY backpressure and RLAST
+| ID | Feature / RTL behaviour | Stimulus (test) | Checker | Coverage |
+|----|-------------------------|-----------------|---------|----------|
+| VP-RV-01 | RVALID and the R payload (RDATA, RID, RUSER, RRESP, RLAST) stay stable until RREADY (AXI rule) | rd_rready_delay_test | A_R_STABLE | CG_RREADY: delay 0 / 1-3 / 4+ cycles |
+| VP-RV-02 | RLAST is 1 on every read response (single-read response of this RTL) | all read tests | A_R_LAST: every R handshake has RLAST=1 | CG_RLAST |
+| VP-RV-03 | RREADY low: the R FIFO absorbs responses. The FSM stalls in DONE_SINGLE_RD and the AR entry is popped only when the response is accepted. TBC | rd_rready_delay_test: back-to-back reads with RREADY held low for many cycles | SB-RD: responses return in order, none lost, none duplicated. A_R_STABLE | CG_R_BUFFER_FULL: read issued while the R FIFO is full |
+
+## 12. AXI ID and USER propagation
+| ID | Feature / RTL behaviour | Stimulus (test) | Checker | Coverage |
+|----|-------------------------|-----------------|---------|----------|
+| VP-ID-01 | BID/BUSER = AWID/AWUSER and RID/RUSER = ARID/ARUSER of the same transaction | id_user_test | SB-RESP (write), SB-RD (read) | CG_ID_USER: zero, all-ones, walking-one and random values over the full ID and USER width (widths as instantiated in the testbench top), crossed with read/write |
+| VP-ID-02 | The same ID used on consecutive transactions, and different IDs on consecutive transactions, do not mix up responses | id_user_test, b2b_rd_test, b2b_wr_test | SB-RESP, SB-RD | CG_ID_USER |
+
+## 13. Simultaneous read and write request (priority)
+| ID | Feature / RTL behaviour | Stimulus (test) | Checker | Coverage |
+|----|-------------------------|-----------------|---------|----------|
+| VP-PRI-01 | When an AR and an AW+W are both available while the FSM is in IDLE, the read is served first | rd_wr_priority_test: (a) AR and AW+W presented in the same cycle. (b) Keep the APB busy with PREADY low so both queue up in the FIFOs, then release | SB-ORDER: the APB read comes before the APB write. A_RD_PRIORITY (white-box): ARVALID and AWVALID both high in IDLE -> read chosen | CG_PRIORITY: same-cycle / queued-behind-busy-APB |
+| VP-PRI-02 | The write is not lost: it executes after the read | rd_wr_priority_test | SB-WR: write completes with correct data | CG_PRIORITY |
+| VP-PRI-03 | Continuous reads can delay a pending write (read priority). Document the behaviour, do not assume fairness | rd_wr_priority_test: a pending write with N consecutive reads (N = 1, 2, 4, 8) | SB-ORDER records the delay. The write must complete after the last read | CG_PRIORITY: write waiting behind 1 / 2-4 / 5+ reads |
+
+## 14. Back-to-back and mixed traffic
+| ID | Feature / RTL behaviour | Stimulus (test) | Checker | Coverage |
+|----|-------------------------|-----------------|---------|----------|
+| VP-B2B-01 | Back-to-back reads (more than the FIFO depth of 4): one APB read per AR, order preserved, no data mix-up | b2b_rd_test: 8 and more reads with zero idle cycles | SB-RD (queue compare) | CG_B2B: read followed by read |
+| VP-B2B-02 | Back-to-back writes (more than the FIFO depth of 4) | b2b_wr_test | SB-WR, SB-RESP | CG_B2B: write followed by write |
+| VP-B2B-03 | Mixed read/write traffic. AXI does not order reads against writes, so the scoreboard keeps separate read and write queues. Order is checked inside each direction only | mixed_rw_test | SB-RD, SB-WR (per-direction queues) | CG_B2B: read then write, write then read |
+
+## 15. Different values, boundary addresses, parameter widths
+| ID | Feature / RTL behaviour | Stimulus (test) | Checker | Coverage |
+|----|-------------------------|-----------------|---------|----------|
+| VP-VAL-01 | Address and data values over the full range: 0, all-ones, alternating, walking, random | all directed tests, random tests | SB-WR, SB-RD | CG_ADDR, CG_DATA |
+| VP-VAL-02 | Unaligned addresses (AxADDR[1:0] != 0) pass through to PADDR unchanged. Document the behaviour | wr_no_wait_test, rd_no_wait_test with unaligned addresses | SB-WR, SB-RD | CG_ADDR: aligned / unaligned bins |
+| VP-PAR-01 | When APB_ADDR_WIDTH is smaller than AXI4_ADDRESS_WIDTH, only the lower APB_ADDR_WIDTH bits reach PADDR. Needs a second parameter configuration | param_width_test (optional extra, second compile configuration) | SB-WR, SB-RD: expected PADDR = AxADDR truncated | CG_ADDR |
+| VP-PAR-02 | 64-bit AXI data with 32-bit APB data uses the module axi2apb_64_32. The default configuration does not elaborate it (see docs/lint_summary.md). Analyse that module before planning checks. TBC | param_width_test (optional extra) | to be defined after the analysis | to be defined |
+
+## 16. PSLVERR behaviour (as implemented by the supplied RTL)
+| ID | Feature / RTL behaviour | Stimulus (test) | Checker | Coverage |
+|----|-------------------------|-----------------|---------|----------|
+| VP-ERR-01 | PSLVERR is not used by the FSM. BRESP and RRESP stay OKAY even when PSLVERR=1. This is the supplied RTL behaviour, not the AMBA expectation, and it is documented | pslverr_test: writes and reads with PSLVERR=1 and with PSLVERR=0 | SB-RESP, SB-RD expect OKAY whatever PSLVERR is. A_RESP_OKAY | CG_PSLVERR: PSLVERR high / low crossed with read / write and with wait states |
+| VP-ERR-02 | PSLVERR high while PREADY is low, and PSLVERR high without a request, has no effect | pslverr_test | A_RESP_OKAY, SB checks unchanged | CG_PSLVERR |
+| VP-ERR-03 | On a read with PSLVERR=1 the PRDATA of the PREADY cycle is still returned as RDATA | pslverr_test | SB-RD: RDATA == PRDATA | CG_PSLVERR |
+
+## 17. Unsupported or not-implemented features (observe and document, do not assume)
+| ID | Feature / RTL behaviour | Stimulus (test) | Checker | Coverage |
+|----|-------------------------|-----------------|---------|----------|
+| VP-UNS-01 | Write burst (AWLEN > 0). The FSM pops one W entry per write, so predicted: the remaining W beats stay in the W FIFO and pair with the next AW. Predicted from the RTL, TBC | burst_observe_test (extra, directed, documented): AWLEN=1 with 2 W beats, then a normal write | No pass/fail against AXI. The observed APB activity and B count are recorded in the final report | CG_BURST_LEN: AWLEN / ARLEN values seen |
+| VP-UNS-02 | Read burst (ARLEN > 0). The FSM returns one R beat with RLAST=1, so an AXI master waiting for more beats would hang. TBC | burst_observe_test: ARLEN=1 | Observed behaviour recorded in the final report | CG_BURST_LEN |
+| VP-UNS-03 | Narrow transfers (AxSIZE smaller than the data width), FIXED and WRAP burst types, AxLOCK, AxCACHE, AxPROT, AxQOS and AxREGION are not used by the FSM | wr_no_wait_test, rd_no_wait_test with these fields varied (single beat) | SB-WR, SB-RD: transfer unchanged | CG_AW_CTRL, CG_AR_CTRL |
