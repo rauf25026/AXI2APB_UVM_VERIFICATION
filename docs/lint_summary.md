@@ -32,3 +32,16 @@ Also reported by the tool: `Notice: Ports coerced to inout` (tool notice about i
 
 ## Conclusion
 No functional DUT issue found by lint. Genuine DUT observations (unused PSLVERR, double semicolon) are documented and will be handled in the verification plan. The DUT was not modified.
+
+## Manual RTL review (added after reading the FSM code)
+
+| Finding | Where | Category | Disposition |
+|---------|-------|----------|-------------|
+| `NS` has no default assignment in the FSM `always_comb`. In the hold cases (IDLE with no request, WAIT_R_PREADY/WAIT_W_PREADY with PREADY low, SEND_B_RESP with BREADY low, DONE_SINGLE_RD with RREADY low) `NS` is not assigned, so a latch on `NS` would be inferred in synthesis. | axi2apb.sv, always_comb at line 331 | **Genuine DUT observation** (coding style). Not reported by VCS `+lint=all`. | Documented. DUT not modified. To be reported to the instructor. |
+
+Simulation check (VCD of the DUT-only smoke run): `CS` and `NS` stay at 3'b000 (IDLE) from time 0, with no X values. A likely reason is that the case `default` branch assigns `NS = IDLE` at time 0 while `CS` is still unknown; this was not traced step by step.
+
+Verification actions that follow from this finding:
+- Assertion: the FSM state is never unknown (X/Z) after reset is released.
+- Coverage: all five FSM states and their transitions, including the hold cases.
+- Directed tests that keep PREADY, BREADY and RREADY low for several cycles to confirm the FSM holds its state correctly.
