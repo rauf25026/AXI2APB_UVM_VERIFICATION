@@ -19,3 +19,6 @@
 ../rtl/axi2apb_bridge/axi2apb_wrap.sv
 
 ../tb/dut_smoke_top.sv
+
++incdir+../uvm
+../uvm/axi2apb_pkg.sv
