@@ -38,5 +38,7 @@ package axi2apb_pkg;
     `include "apb_agent/apb_agent_cfg.sv"
     `include "apb_agent/apb_item.sv"
     `include "apb_agent/apb_driver.sv"
+    `include "apb_agent/apb_monitor.sv"
+    `include "apb_agent/apb_agent.sv"
 
 endpackage : axi2apb_pkg
