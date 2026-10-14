@@ -22,8 +22,11 @@ package axi2apb_pkg;
         .AXI_USER_WIDTH ( AXI_USER_W )
     ) axi_vif_t;
 
+    // ---- AXI master agent ----
     `include "axi_agent/axi_item.sv"
     `include "axi_agent/axi_sequencer.sv"
     `include "axi_agent/axi_driver.sv"
+    `include "axi_agent/axi_monitor.sv"
+    `include "axi_agent/axi_agent.sv"
 
 endpackage : axi2apb_pkg
