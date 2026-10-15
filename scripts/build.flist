@@ -2,6 +2,9 @@
 +incdir+../rtl/axi2apb_bridge
 +incdir+../rtl/axi2apb_bridge/includes
 +incdir+../tb
++incdir+../uvm
++incdir+../sequences
++incdir+../tests
 
 ../tb/interface/axi_bus.sv
 ../tb/interface/apb_bus.sv
@@ -18,7 +21,5 @@
 ../rtl/axi2apb_bridge/axi2apb_64_32.sv
 ../rtl/axi2apb_bridge/axi2apb_wrap.sv
 
-../tb/dut_smoke_top.sv
-
-+incdir+../uvm
 ../uvm/axi2apb_pkg.sv
+../tb/tb_top.sv
