@@ -21,7 +21,7 @@ compile:
 
 # To run one simulation --> make sim TEST=<test_name>
 sim:
-	cd $(BUILD) && ./simv -cm $(CM) -cm_name $(TEST) +UVM_TESTNAME=$(TEST) +UVM_VERBOSITY=$(VERB) +UVM_NO_RELNOTES +UVM_NO_RELNOTES -l $(TEST).log
+	cd $(BUILD) && ./simv -cm $(CM) -cm_name $(TEST) +UVM_TESTNAME=$(TEST) +UVM_VERBOSITY=$(VERB) +UVM_NO_RELNOTES -l $(TEST).log
 	@grep -E "SMOKE|TEST PASSED|TEST FAILED|Functional coverage|UVM_ERROR :|UVM_FATAL :" $(BUILD)/$(TEST).log
 
 
