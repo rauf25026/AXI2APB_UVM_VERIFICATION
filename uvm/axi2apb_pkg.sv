@@ -41,4 +41,9 @@ package axi2apb_pkg;
     `include "apb_agent/apb_monitor.sv"
     `include "apb_agent/apb_agent.sv"
 
+    // ---- env, sequences, tests ----
+    `include "axi2apb_env.sv"
+    `include "axi_seq_lib.sv"
+    `include "axi2apb_tests.sv"
+
 endpackage : axi2apb_pkg
