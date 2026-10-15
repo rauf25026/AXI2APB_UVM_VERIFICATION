@@ -1,0 +1,58 @@
+// -----------------------------------------------------------------------------
+// Tests. Har test aakhir mein "TEST PASSED" ya "TEST FAILED" chhapta hai.
+// -----------------------------------------------------------------------------
+class axi2apb_base_test extends uvm_test;
+    `uvm_component_utils(axi2apb_base_test)
+
+    axi2apb_env env;
+
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction
+
+    function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+        env = axi2apb_env::type_id::create("env", this);
+    endfunction
+
+    function void end_of_elaboration_phase(uvm_phase phase);
+        uvm_top.print_topology();            // poora UVM tree chhap do
+    endfunction
+
+    // Har test is ko apni stimulus se badalta hai
+    virtual task run_stimulus();
+    endtask
+
+    task run_phase(uvm_phase phase);
+        phase.raise_objection(this);         // "main kaam kar raha hoon, simulation mat roko"
+        run_stimulus();
+        #200ns;                              // monitors ko aakhri items nipatane do
+        phase.drop_objection(this);          // "kaam khatam"
+    endtask
+
+    function void report_phase(uvm_phase phase);
+        uvm_report_server svr;
+        super.report_phase(phase);
+        svr = uvm_report_server::get_server();
+        if (svr.get_severity_count(UVM_ERROR) + svr.get_severity_count(UVM_FATAL) == 0)
+            `uvm_info("RESULT", "TEST PASSED", UVM_NONE)
+        else
+            `uvm_info("RESULT", "TEST FAILED", UVM_NONE)
+    endfunction
+endclass
+
+
+// Bring-up test: 3 write -> read-back (data sequence ke andar compare hota hai)
+class bringup_test extends axi2apb_base_test;
+    `uvm_component_utils(bringup_test)
+
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction
+
+    task run_stimulus();
+        axi_write_read_seq seq = axi_write_read_seq::type_id::create("seq");
+        seq.num_txns = 3;
+        seq.start(env.axi_agt.sqr);          // sequence ko AXI sequencer par chalao
+    endtask
+endclass
