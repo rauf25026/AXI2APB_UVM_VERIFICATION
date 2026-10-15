@@ -35,7 +35,7 @@ results/     selected reports / results
 ## How to run
 ```
 cd scripts
-make run              # compile + run the DUT-only smoke top
+make run              # compile + run bringup_test (UVM)
 make clean
 ```
 Compile details and the file list: [docs/milestone1_compile.md](docs/milestone1_compile.md)
@@ -47,6 +47,9 @@ Compile details and the file list: [docs/milestone1_compile.md](docs/milestone1_
 | 1 - Compile the DUT | Done (clean compile/elaboration, DUT-only smoke top passes reset) |
 | 2 - RTL linting | Done, 36 messages classified (docs/lint_summary.md) |
 | 3 - DUT analysis and verification plan | Done (docs/verification_plan.md, 66 items) |
-| 4+ - UVM environment, scoreboard, assertions, coverage, tests | Not started |
+| 4 and 5 - UVM environment and agents | Done: AXI master agent, APB slave agent, env, tb_top (single-beat traffic) |
+| 6 - Scoreboard and reference model | In progress: write, read and response checks work; mutation check pending |
+| 7 - Assertions and functional coverage | Not started |
+| 8 to 10 - Directed and random tests, regression | Only bringup_test so far |
 
 Daily progress: [docs/progress.md](docs/progress.md)

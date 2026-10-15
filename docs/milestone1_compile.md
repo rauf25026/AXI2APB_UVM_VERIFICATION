@@ -43,3 +43,6 @@ $finish at simulation time               245000
 `tb/interface/axi_bus.sv` and `tb/interface/apb_bus.sv` define the `AXI_BUS` / `APB_BUS`
 interfaces expected by `axi2apb_wrap` (`AXI_BUS.Slave`, `APB_BUS.Master`). Signal names and widths
 were taken from the wrapper port connections. No DUT file was modified.
+
+## Note (2026-10-16)
+`scripts/build.flist` now compiles `tb/tb_top.sv` (UVM testbench) and `uvm/axi2apb_pkg.sv` instead of `tb/dut_smoke_top.sv`. The smoke top stays in `tb/` as the Milestone 1 reference. The compile command above is unchanged, and `make run` now runs the UVM `bringup_test`.
