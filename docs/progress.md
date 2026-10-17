@@ -59,3 +59,11 @@
 - **Coverage/lint status:** Code coverage collection is enabled (line, cond, fsm, tgl, branch) but no report has been analysed. Functional coverage and assertions are not implemented yet.
 - **Issues encountered:** Before the scoreboard, the test passed only because of a check inside the sequence, which sees the AXI side only. The scoreboard adds the APB-side check. The scoreboard has not yet been shown to catch a real error (a mutation check is planned).
 - **Next step:** Mutation check of the scoreboard, then the directed tests from the verification plan, assertions and functional coverage.
+
+## 2026-10-18 (scoreboard mutation check)
+- **Work completed:** Mutation hooks (+MUT=1..6) in the scoreboard and `scripts/mutation_check.sh`; results saved in `results/scoreboard_mutation.md`.
+- **Tests executed:** `bringup_test` with MUT=0 to 6.
+- **Pass/fail result:** MUT=0 passes with 0 errors; MUT=1 to 6 all fail with the expected number of errors (6, 3, 3, 1, 3, 3). Every injected fault was caught.
+- **Coverage/lint status:** Unchanged.
+- **Issues encountered:** None.
+- **Next step:** A few simple directed tests (APB wait states), then assertions and coverage.
