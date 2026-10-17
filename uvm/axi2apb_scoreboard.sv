@@ -5,6 +5,9 @@
 // Order: APB item hamesha AXI item se pehle aata hai (B/R response APB transfer ke baad
 // aati hai), is liye APB items queue mein rakhte hain aur AXI item aane par compare karte hain.
 // Read aur write ki queues alag hain (AXI mein inka aapas mein order nahi hota).
+//
+// Mutation check: +MUT=<n> par input mein jaan boojh kar kharabi daali jati hai taake
+// dekha ja sake ke scoreboard use pakarta hai. Default MUT=0 mein kuch nahi badalta.
 // -----------------------------------------------------------------------------
 `uvm_analysis_imp_decl(_axi)
 `uvm_analysis_imp_decl(_apb)
@@ -12,7 +15,6 @@
 class axi2apb_scoreboard extends uvm_scoreboard;
     `uvm_component_utils(axi2apb_scoreboard)
 
-    // Do "kaan": aik AXI monitor ka radio sunta hai, doosra APB monitor ka
     uvm_analysis_imp_axi #(axi_item, axi2apb_scoreboard) axi_imp;
     uvm_analysis_imp_apb #(apb_item, axi2apb_scoreboard) apb_imp;
 
@@ -20,6 +22,8 @@ class axi2apb_scoreboard extends uvm_scoreboard;
     apb_item apb_rd_q[$];     // APB reads jo AXI read ka intezar kar rahe hain
 
     int unsigned wr_ok, rd_ok, errors;
+    int unsigned apb_wr_seen;     // mutation 4 ke liye: kitni APB writes dekhi
+    int          mut = 0;         // mutation number (0 = band)
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -29,16 +33,31 @@ class axi2apb_scoreboard extends uvm_scoreboard;
         super.build_phase(phase);
         axi_imp = new("axi_imp", this);
         apb_imp = new("apb_imp", this);
+        if (!$value$plusargs("MUT=%d", mut)) mut = 0;
+        if (mut != 0)
+            `uvm_info("SB", $sformatf("MUTATION %0d ACTIVE: jaan boojh kar kharabi daali ja rahi hai", mut), UVM_NONE)
     endfunction
 
     // APB monitor ne item bheja: direction ke hisaab se queue mein rakho
     function void write_apb(apb_item t);
+        if (t.write) apb_wr_seen++;
+
+        // ---- mutation hooks (sirf +MUT=n par chalte hain) ----
+        if (mut == 1) t.addr  = t.addr ^ 32'h4;                     // address ka bit 2 ulta
+        if (mut == 2 && t.write)  t.wdata = t.wdata ^ 32'h1;        // write data ka bit 0 ulta
+        if (mut == 3 && !t.write) t.rdata = t.rdata ^ 32'h1;        // read data ka bit 0 ulta
+        if (mut == 4 && t.write && apb_wr_seen == 2) return;        // doosri APB write gayab
+
         if (t.write) apb_wr_q.push_back(t);
         else         apb_rd_q.push_back(t);
     endfunction
 
     // AXI monitor ne mukammal transaction bheji: compare karo
     function void write_axi(axi_item t);
+        // ---- mutation hooks ----
+        if (mut == 5 && t.kind == AXI_WRITE) t.bresp   = 2'b10;             // BRESP = SLVERR
+        if (mut == 6 && t.kind == AXI_READ)  t.resp_id = t.resp_id ^ 1;     // RID ghalat
+
         if (t.kind == AXI_WRITE) check_write(t);
         else                     check_read(t);
     endfunction
@@ -126,7 +145,7 @@ class axi2apb_scoreboard extends uvm_scoreboard;
 
     function void report_phase(uvm_phase phase);
         super.report_phase(phase);
-        `uvm_info("SB", $sformatf("writes matched=%0d reads matched=%0d errors=%0d", wr_ok, rd_ok, errors), UVM_NONE)
+        `uvm_info("SB", $sformatf("MUT=%0d writes matched=%0d reads matched=%0d errors=%0d", mut, wr_ok, rd_ok, errors), UVM_NONE)
     endfunction
 
 endclass
