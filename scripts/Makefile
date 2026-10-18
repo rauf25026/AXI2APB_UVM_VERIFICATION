@@ -4,7 +4,7 @@ CM    = line+cond+fsm+tgl+branch
 OUT   = ./out
 BUILD = $(OUT)/build
 # Abhi sirf bringup_test hai; UVM tests banne par yahan add hongi
-TESTS = bringup_test
+TESTS = bringup_test wr_wait_test rd_wait_test
 
 .PHONY: compile sim run regress gui code_covg func_covg coverage clean
 

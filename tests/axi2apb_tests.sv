@@ -56,3 +56,39 @@ class bringup_test extends axi2apb_base_test;
         seq.start(env.axi_agt.sqr);          // sequence ko AXI sequencer par chalao
     endtask
 endclass
+
+
+// Plan: wr_wait_test (VP-WW-01..03). Sirf writes, APB slave mein 3 se 8 extra wait cycles
+class wr_wait_test extends axi2apb_base_test;
+    `uvm_component_utils(wr_wait_test)
+
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction
+
+    task run_stimulus();
+        axi_write_seq seq = axi_write_seq::type_id::create("seq");
+        env.apb_cfg.min_wait = 3;
+        env.apb_cfg.max_wait = 8;
+        seq.num_txns = 10;
+        seq.start(env.axi_agt.sqr);
+    endtask
+endclass
+
+
+// Plan: rd_wait_test (VP-RW-01..03). Sirf reads, APB slave mein 3 se 8 extra wait cycles
+class rd_wait_test extends axi2apb_base_test;
+    `uvm_component_utils(rd_wait_test)
+
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction
+
+    task run_stimulus();
+        axi_read_seq seq = axi_read_seq::type_id::create("seq");
+        env.apb_cfg.min_wait = 3;
+        env.apb_cfg.max_wait = 8;
+        seq.num_txns = 10;
+        seq.start(env.axi_agt.sqr);
+    endtask
+endclass
