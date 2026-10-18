@@ -92,3 +92,69 @@ class rd_wait_test extends axi2apb_base_test;
         seq.start(env.axi_agt.sqr);
     endtask
 endclass
+
+
+// Plan: b2b_wr_test (VP-B2B-02). 20 writes lagatar
+class b2b_wr_test extends axi2apb_base_test;
+    `uvm_component_utils(b2b_wr_test)
+
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction
+
+    task run_stimulus();
+        axi_write_seq seq = axi_write_seq::type_id::create("seq");
+        seq.num_txns = 20;
+        seq.start(env.axi_agt.sqr);
+    endtask
+endclass
+
+
+// Plan: b2b_rd_test (VP-B2B-01). 20 reads lagatar
+class b2b_rd_test extends axi2apb_base_test;
+    `uvm_component_utils(b2b_rd_test)
+
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction
+
+    task run_stimulus();
+        axi_read_seq seq = axi_read_seq::type_id::create("seq");
+        seq.num_txns = 20;
+        seq.start(env.axi_agt.sqr);
+    endtask
+endclass
+
+
+// Plan: mixed_rw_test (VP-B2B-03). Read aur write random mix
+class mixed_rw_test extends axi2apb_base_test;
+    `uvm_component_utils(mixed_rw_test)
+
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction
+
+    task run_stimulus();
+        axi_random_seq seq = axi_random_seq::type_id::create("seq");
+        seq.num_txns = 30;
+        seq.start(env.axi_agt.sqr);
+    endtask
+endclass
+
+
+// Plan: pslverr_test (VP-ERR-01..03). APB slave 50% transfers par PSLVERR=1 deta hai.
+// Pass hone ka matlab: DUT PSLVERR ko ignore karta hai (BRESP/RRESP OKAY rehte hain).
+class pslverr_test extends axi2apb_base_test;
+    `uvm_component_utils(pslverr_test)
+
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction
+
+    task run_stimulus();
+        axi_random_seq seq = axi_random_seq::type_id::create("seq");
+        env.apb_cfg.slverr_pct = 50;
+        seq.num_txns = 30;
+        seq.start(env.axi_agt.sqr);
+    endtask
+endclass
