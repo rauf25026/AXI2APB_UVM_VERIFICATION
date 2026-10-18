@@ -81,3 +81,47 @@ class axi_write_read_seq extends axi_base_seq;
         end
     endtask
 endclass
+
+
+// Sirf writes (random data). Compare scoreboard karta hai (AXI ki taraf se APB ki taraf).
+class axi_write_seq extends axi_base_seq;
+    `uvm_object_utils(axi_write_seq)
+
+    int unsigned         num_txns  = 5;
+    bit [AXI_ADDR_W-1:0] addr_base = 32'h0000_2000;
+
+    function new(string name = "axi_write_seq");
+        super.new(name);
+    endfunction
+
+    task body();
+        axi_item wr;
+        for (int n = 0; n < num_txns; n++) begin
+            do_write(addr_base + 4 * n, $urandom(), $urandom(), wr);
+            if (wr.timed_out)
+                `uvm_error("WR_SEQ", $sformatf("write %0d timeout", n))
+        end
+    endtask
+endclass
+
+
+// Sirf reads. Jis address par kabhi write nahi hua wahan APB slave default data deta hai.
+class axi_read_seq extends axi_base_seq;
+    `uvm_object_utils(axi_read_seq)
+
+    int unsigned         num_txns  = 5;
+    bit [AXI_ADDR_W-1:0] addr_base = 32'h0000_3000;
+
+    function new(string name = "axi_read_seq");
+        super.new(name);
+    endfunction
+
+    task body();
+        axi_item rd;
+        for (int n = 0; n < num_txns; n++) begin
+            do_read(addr_base + 4 * n, $urandom(), rd);
+            if (rd.timed_out)
+                `uvm_error("RD_SEQ", $sformatf("read %0d timeout", n))
+        end
+    endtask
+endclass
