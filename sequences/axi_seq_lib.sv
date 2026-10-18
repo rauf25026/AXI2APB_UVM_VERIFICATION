@@ -125,3 +125,29 @@ class axi_read_seq extends axi_base_seq;
         end
     endtask
 endclass
+
+
+// Random mix: kabhi read, kabhi write, random address/data/ID. Compare scoreboard karta hai.
+class axi_random_seq extends axi_base_seq;
+    `uvm_object_utils(axi_random_seq)
+
+    int unsigned num_txns = 20;
+
+    function new(string name = "axi_random_seq");
+        super.new(name);
+    endfunction
+
+    task body();
+        axi_item t;
+        for (int n = 0; n < num_txns; n++) begin
+            t = axi_item::type_id::create("rnd_item");
+            start_item(t);
+            // address chhote window (0x0 se 0xFFF) mein, taake wahi address dobara aaye
+            if (!t.randomize() with { addr[AXI_ADDR_W-1:12] == 0; })
+                `uvm_fatal("RAND", "random item randomize fail")
+            finish_item(t);
+            if (t.timed_out)
+                `uvm_error("RND_SEQ", {"timeout: ", t.convert2string()})
+        end
+    endtask
+endclass
