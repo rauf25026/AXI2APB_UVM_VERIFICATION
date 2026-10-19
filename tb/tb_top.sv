@@ -45,6 +45,8 @@ module tb_top;
         .apb_master ( apb_if )
     );
 
+    axi2apb_checker chk (.axi(axi_if), .apb(apb_if));   // assertions
+
     // Interfaces ko config_db (notice board) par rakho, phir test shuru karo
     initial begin
         uvm_config_db#(axi_vif_t)::set(null, "*", "axi_vif", axi_if);

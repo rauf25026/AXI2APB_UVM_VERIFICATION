@@ -22,4 +22,5 @@
 ../rtl/axi2apb_bridge/axi2apb_wrap.sv
 
 ../uvm/axi2apb_pkg.sv
+../assertions/axi2apb_checker.sv
 ../tb/tb_top.sv

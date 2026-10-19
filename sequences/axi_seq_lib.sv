@@ -151,3 +151,51 @@ class axi_random_seq extends axi_base_seq;
         end
     endtask
 endclass
+
+
+// Wide random: poori address range aur data ke khas patterns (coverage ke liye)
+class axi_wide_seq extends axi_base_seq;
+    `uvm_object_utils(axi_wide_seq)
+
+    int unsigned num_txns = 60;
+
+    function new(string name = "axi_wide_seq");
+        super.new(name);
+    endfunction
+
+    function bit [AXI_ADDR_W-1:0] pick_addr();
+        case ($urandom_range(4, 0))
+            0:       return 32'h0000_0000;
+            1:       return 32'hFFFF_FFFC;
+            2:       return {$urandom_range(32'h0FFF_FFFF, 32'h0), 2'b00} & 32'h0FFF_FFFC;
+            3:       return $urandom() & 32'hFFFF_FFFC;
+            default: return {20'h0, $urandom_range(12'hFFC, 12'h0)} & 32'hFFC;
+        endcase
+    endfunction
+
+    function bit [AXI_DATA_W-1:0] pick_data();
+        case ($urandom_range(4, 0))
+            0:       return 32'h0000_0000;
+            1:       return 32'hFFFF_FFFF;
+            2:       return 32'hAAAA_AAAA;
+            3:       return 32'h5555_5555;
+            default: return $urandom();
+        endcase
+    endfunction
+
+    task body();
+        axi_item             t;
+        bit [AXI_ADDR_W-1:0] a;
+        for (int n = 0; n < num_txns; n++) begin
+            a = pick_addr();
+            t = axi_item::type_id::create("wide_item");
+            start_item(t);
+            if (!t.randomize() with { addr == a; })
+                `uvm_fatal("RAND", "wide item randomize fail")
+            if (t.kind == AXI_WRITE) t.wdata[0] = pick_data();
+            finish_item(t);
+            if (t.timed_out)
+                `uvm_error("WIDE_SEQ", {"timeout: ", t.convert2string()})
+        end
+    endtask
+endclass

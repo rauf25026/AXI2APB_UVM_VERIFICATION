@@ -158,3 +158,22 @@ class pslverr_test extends axi2apb_base_test;
         seq.start(env.axi_agt.sqr);
     endtask
 endclass
+
+
+// Plan: random_wide_test (VP-VAL-01, VP-WR-04/05). Poori address range, data patterns, wait states 0..6
+class random_wide_test extends axi2apb_base_test;
+    `uvm_component_utils(random_wide_test)
+
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction
+
+    task run_stimulus();
+        axi_wide_seq seq = axi_wide_seq::type_id::create("seq");
+        env.apb_cfg.min_wait   = 0;
+        env.apb_cfg.max_wait   = 6;
+        env.apb_cfg.slverr_pct = 20;
+        seq.num_txns = 60;
+        seq.start(env.axi_agt.sqr);
+    endtask
+endclass
