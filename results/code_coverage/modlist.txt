@@ -1,0 +1,21 @@
+Design Module List
+
+Total Module Definition Coverage Summary 
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 65.89  87.74  54.55  50.69  60.00  76.47 
+
+
+Total modules in report: 10
+-------------------------------------------------------------------------------
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME             
+ 35.62 --     --      35.62 --     --     axi_ar_buffer    
+ 37.63 --     --      37.63 --     --     axi_aw_buffer    
+ 50.00 --     --      50.00 --     --     axi2apb_wrap     
+ 63.39 --     --      63.39 --     --     axi_single_slice 
+ 66.25  80.95  54.55  48.24 --      81.25 fifo             
+ 68.94  92.19 --      51.36  60.00  72.22 axi2apb          
+ 68.99 --     --      68.99 --     --     axi_w_buffer     
+ 70.63 --     --      70.63 --     --     axi_b_buffer     
+ 74.10 --     --      74.10 --     --     axi_r_buffer     
+--     --     --     --     --     --     tb_top           
+

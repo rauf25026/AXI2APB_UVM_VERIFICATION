@@ -1,0 +1,28 @@
+Dashboard
+
+Date: Tue Oct 20 00:49:30 2026
+
+User: unknown
+
+Version: L-2016.06
+Command line: urg -full64 -dir ./out/build/simv.vdb -metric line+cond+fsm+tgl+branch -format both -report ./out/code_coverage_report 
+
+Number of tests: 1
+
+-------------------------------------------------------------------------------
+Total Coverage Summary 
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 63.48  83.58  47.27  46.98  60.00  79.59 
+
+
+-------------------------------------------------------------------------------
+Hierarchical coverage data for top-level instances 
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME   
+ 63.48  83.58  47.27  46.98  60.00  79.59 tb_top 
+
+
+-------------------------------------------------------------------------------
+Total Module Definition Coverage Summary 
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 65.89  87.74  54.55  50.69  60.00  76.47 
+
