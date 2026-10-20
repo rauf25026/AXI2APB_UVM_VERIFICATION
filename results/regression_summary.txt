@@ -1,0 +1,26 @@
+TEST                 SEED  RESULT       MATCHED    FUNC_COV
+bringup_test         1     TEST PASSED  W3 R3      axi=63.9% apb=52.8%
+bringup_test         2     TEST PASSED  W3 R3      axi=63.9% apb=43.1%
+bringup_test         3     TEST PASSED  W3 R3      axi=63.9% apb=48.6%
+wr_wait_test         1     TEST PASSED  W10 R0     axi=47.2% apb=40.3%
+wr_wait_test         2     TEST PASSED  W10 R0     axi=47.2% apb=40.3%
+wr_wait_test         3     TEST PASSED  W10 R0     axi=47.2% apb=40.3%
+rd_wait_test         1     TEST PASSED  W0 R10     axi=50.0% apb=40.3%
+rd_wait_test         2     TEST PASSED  W0 R10     axi=38.9% apb=40.3%
+rd_wait_test         3     TEST PASSED  W0 R10     axi=38.9% apb=40.3%
+b2b_wr_test          1     TEST PASSED  W20 R0     axi=47.2% apb=40.3%
+b2b_wr_test          2     TEST PASSED  W20 R0     axi=47.2% apb=40.3%
+b2b_wr_test          3     TEST PASSED  W20 R0     axi=58.3% apb=40.3%
+b2b_rd_test          1     TEST PASSED  W0 R20     axi=50.0% apb=40.3%
+b2b_rd_test          2     TEST PASSED  W0 R20     axi=38.9% apb=40.3%
+b2b_rd_test          3     TEST PASSED  W0 R20     axi=50.0% apb=40.3%
+mixed_rw_test        1     TEST PASSED  W12 R18    axi=63.9% apb=56.9%
+mixed_rw_test        2     TEST PASSED  W15 R15    axi=63.9% apb=56.9%
+mixed_rw_test        3     TEST PASSED  W16 R14    axi=63.9% apb=56.9%
+pslverr_test         1     TEST PASSED  W12 R18    axi=63.9% apb=70.8%
+pslverr_test         2     TEST PASSED  W15 R15    axi=63.9% apb=70.8%
+pslverr_test         3     TEST PASSED  W16 R14    axi=63.9% apb=70.8%
+random_wide_test     1     TEST PASSED  W32 R28    axi=100.0% apb=98.6%
+random_wide_test     2     TEST PASSED  W29 R31    axi=100.0% apb=97.2%
+random_wide_test     3     TEST PASSED  W28 R32    axi=88.9% apb=97.2%
+TOTAL: 24 passed, 0 failed
